@@ -23,6 +23,59 @@ const FabricTest = () => {
   const [selectedObj, setSelectedObj] = useState<fabric.Object | undefined>(
     undefined
   );
+  const [layerList, setLayerList] = useState([]);
+
+  const getCurrentSelectObjIndex = (_selectedObj: fabric.Object) => {
+    if (_selectedObj && faricCanvas) {
+      const objectsOnCanvas = faricCanvas.getObjects();
+      const selectedIndex = objectsOnCanvas.findIndex(
+        (obj) => obj.name === _selectedObj.name
+      );
+      return selectedIndex;
+    }
+  };
+
+  const handleDrop = (
+    e: React.DragEvent<HTMLLIElement>,
+    targetIndex: number
+  ) => {
+    e.preventDefault();
+
+    if (faricCanvas && layerList.length > 0) {
+      const draggedObjId = e.dataTransfer.getData("text/plain");
+      const draggedObjIndex = layerList.findIndex(
+        (obj) => obj.id === draggedObjId
+      );
+
+      if (draggedObjIndex !== -1) {
+        // 移除被拖动的对象
+        const updatedLayerList = [...layerList];
+        const [draggedObj] = updatedLayerList.splice(draggedObjIndex, 1);
+
+        // 在目标位置插入被拖动的对象
+        updatedLayerList.splice(targetIndex, 0, draggedObj);
+
+        // 更新 layerList
+        setLayerList(updatedLayerList);
+
+        // 清空 Canvas 中的对象
+        faricCanvas.clear();
+
+        // 重新添加按照新顺序的对象
+        updatedLayerList.forEach((obj) => {
+          const canvasObj = faricCanvas
+            ?.getObjects()
+            .find((canvasObj) => canvasObj.name === obj.id);
+          if (canvasObj) {
+            faricCanvas?.add(canvasObj);
+          }
+        });
+
+        faricCanvas?.requestRenderAll();
+      }
+    }
+  };
+
   useEffect(() => {
     const canvas = new fabric.Canvas(canvasRef.current, {
       // backgroundColor: "#dcd6d6",
@@ -62,10 +115,39 @@ const FabricTest = () => {
       setSelectedObj(undefined);
     });
 
+    // 監聽物件新增事件
+    canvas.on("object:added", function (options) {
+      const addedObject = options.target;
+      console.log("新增了一個物件:", addedObject);
+      updateLayerList(canvas);
+    });
+
+    // 監聽物件新增事件
+    canvas.on("object:removed", function (options) {
+      const removedObject = options.target;
+      console.log("刪除了一個物件:", removedObject);
+      updateLayerList(canvas);
+    });
+
     return () => {
       canvas.dispose();
     };
   }, []);
+
+  // 更新圖層列表的函數
+  const updateLayerList = (fabricCanvas: fabric.Canvas) => {
+    // 獲取 Canvas 上的所有物件
+    const objectsOnCanvas = fabricCanvas.getObjects();
+
+    // 更新 React 狀態
+    setLayerList(
+      objectsOnCanvas.map((object, index) => ({
+        id: index,
+        name: object.name,
+        zIndex: `${index}`,
+      }))
+    );
+  };
 
   useEffect(() => {
     // Check if `faricCanvas` is not null before calling `changeObjectColor` function
@@ -117,6 +199,7 @@ const FabricTest = () => {
       a.click();
     }
   };
+
   return (
     <div className={classes.container}>
       <div className={classes.controlBar}>
@@ -144,7 +227,20 @@ const FabricTest = () => {
         <div className={classes.buttonItem}>
           <Button
             buttonLabel="Remove"
-            handlerFunction={() => removeObject(faricCanvas)}
+            handlerFunction={() => {
+              removeObject(faricCanvas);
+              if (faricCanvas) {
+                const objectsOnCanvas = faricCanvas.getObjects();
+                console.log("objectsOnCanvas", objectsOnCanvas);
+                setLayerList(
+                  objectsOnCanvas.map((object, index) => ({
+                    id: index,
+                    name: object.name,
+                    zIndex: `${index}`,
+                  }))
+                );
+              }
+            }}
           />
         </div>
         <div className={classes.buttonItem}>
@@ -183,8 +279,55 @@ const FabricTest = () => {
           </div>
         </div>
       )}
-      <div className={classes.samplecanvas}>
-        <canvas width={600} height={300} ref={canvasRef}></canvas>
+      <div className={classes.layoutControlBar}>
+        <div className={classes.buttonItem}>
+          <Button
+            buttonLabel="選中的物件移到最前面"
+            handlerFunction={() =>
+              faricCanvas.bringToFront(faricCanvas.getActiveObject())
+            }
+          />
+        </div>
+        <div className={classes.buttonItem}>
+          <Button
+            buttonLabel="選中的物件移到最後面"
+            handlerFunction={() =>
+              faricCanvas.sendToBack(faricCanvas.getActiveObject())
+            }
+          />
+        </div>
+        <div className={classes.buttonItem}>
+          <Button
+            buttonLabel="選中的物件往前移動一層"
+            handlerFunction={() =>
+              faricCanvas.bringForward(faricCanvas.getActiveObject())
+            }
+          />
+        </div>
+        <div className={classes.buttonItem}>
+          <Button
+            buttonLabel="選中的物件往後移動一層"
+            handlerFunction={() =>
+              faricCanvas.sendBackwards(faricCanvas.getActiveObject())
+            }
+          />
+        </div>
+      </div>
+      <div className={classes.canvasBlock}>
+        <div className={classes.samplecanvas}>
+          <canvas width={600} height={300} ref={canvasRef}></canvas>
+        </div>
+        <div className={classes.layoutListBlock}>
+          <ul className={classes.layoutulstContent}>
+            {layerList.map((item, index) => (
+              <li
+                draggable
+                className={`${classes.layoutListItem} `}
+                key={item.name}
+              >{`${index} : ${item.name}`}</li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

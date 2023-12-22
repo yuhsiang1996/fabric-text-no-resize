@@ -113,6 +113,7 @@ export const addCircle = (
     stroke: stroke,
     strokeWidth: strokeWidth,
     fill: fill,
+    name: `Circle-${canvas.getObjects().length}`,
   });
 
   circle.on("moving", function (e) {
@@ -149,7 +150,9 @@ export const addArrow = (canvas: fabric.Canvas) => {
     strokeWidth: 2,
     stroke: "#ff0000",
     padding: 10,
+    name: `LineWithArrow-${canvas.getObjects().length}`,
   });
 
   canvas.add(LineWithArrowObj);
+  canvas.setActiveObject(LineWithArrowObj);
 };
