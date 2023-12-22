@@ -13,7 +13,7 @@ fabric.LineWithArrow = fabric.util.createClass(fabric.Line, {
 
   hasBorders: false,
 
-  arrowheadSize: 15, // 初始箭頭大小
+  arrowheadSize: 5, // 初始箭頭大小
 
   _getCacheCanvasDimensions() {
     let dim = this.callSuper("_getCacheCanvasDimensions");
@@ -146,7 +146,7 @@ export const addCircle = (
 export const addArrow = (canvas: fabric.Canvas) => {
   // 宣告一個 LineWithArrow 實例
   const LineWithArrowObj = new fabric.LineWithArrow([50, 50, 150, 50], {
-    strokeWidth: 10,
+    strokeWidth: 2,
     stroke: "#ff0000",
     padding: 10,
   });
