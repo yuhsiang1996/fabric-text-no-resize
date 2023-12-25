@@ -1,7 +1,7 @@
 import { fabric } from "fabric";
 
 export const uploadImageHandler = (
-  faricCanvas: fabric.Canvas,
+  fabricCanvas: fabric.Canvas,
   inputElOnchange: React.ChangeEvent<HTMLInputElement>
 ) => {
   console.log("uploadImageHandler");
@@ -24,8 +24,8 @@ export const uploadImageHandler = (
         const scaleY = obj.scaleY;
 
         if (!scaleX || !scaleY) return;
-        const maxX = faricCanvas.width - obj.width * scaleX;
-        const MaxyY = faricCanvas.height - obj.height * scaleY;
+        const maxX = fabricCanvas.width - obj.width * scaleX;
+        const MaxyY = fabricCanvas.height - obj.height * scaleY;
 
         obj.set({
           left: Math.min(maxX, Math.max(0, obj.left)),
@@ -34,9 +34,12 @@ export const uploadImageHandler = (
 
         obj.setCoords();
       });
-
-      faricCanvas.add(img);
-      faricCanvas.setActiveObject(img);
+      const currentCanvasObjLen = fabricCanvas.getObjects().length;
+      img.set({
+        name: `Image-${currentCanvasObjLen}`,
+      });
+      fabricCanvas.add(img);
+      fabricCanvas.setActiveObject(img);
     });
   };
   reader.readAsDataURL(inputElOnchange.target.files[0]);

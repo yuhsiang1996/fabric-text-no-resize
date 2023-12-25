@@ -7,12 +7,12 @@ import { removeObject, changeObjectColor } from "../../utils/editFabricObject";
 
 const FabricCanvas = () => {
   const canvasRef = useRef(null);
-  const [faricCanvas, setFaricCanvas] = useState<fabric.Canvas>(null);
+  const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas>(null);
   const [objcetColor, setObjcetColor] = useState<string>("#ffffff");
   // Initialize step or action remind text state
   const [actionText, setActionText] = useState({ text: "", left: 0, top: 0 });
 
-  // Initialize a Fabric.js canvas and set it to the `faricCanvas` state.
+  // Initialize a Fabric.js canvas and set it to the `fabricCanvas` state.
   useEffect(() => {
     // Create a new Fabric.js canvas
     const canvas = new fabric.Canvas(canvasRef.current);
@@ -142,8 +142,8 @@ const FabricCanvas = () => {
 
     canvas.add(group, OtherText);
 
-    // Set the canvas to the `faricCanvas` state
-    setFaricCanvas(canvas);
+    // Set the canvas to the `fabricCanvas` state
+    setFabricCanvas(canvas);
 
     // --
 
@@ -155,19 +155,19 @@ const FabricCanvas = () => {
 
   // Update the color of selected objects on the canvas when `objcetColor` changes.
   useEffect(() => {
-    // Check if `faricCanvas` is not null before calling `changeObjectColor` function
-    if (faricCanvas !== null) changeObjectColor(faricCanvas, objcetColor);
+    // Check if `fabricCanvas` is not null before calling `changeObjectColor` function
+    if (fabricCanvas !== null) changeObjectColor(fabricCanvas, objcetColor);
   }, [objcetColor]);
 
   return (
     <div className={classes.Samplecanvas}>
       <Button
         buttonLabel="AddRect"
-        handlerFunction={() => addRect(faricCanvas, {})}
+        handlerFunction={() => addRect(fabricCanvas, {})}
       />
       <Button
         buttonLabel="Remove"
-        handlerFunction={() => removeObject(faricCanvas)}
+        handlerFunction={() => removeObject(fabricCanvas)}
       />
       <input
         type="color"

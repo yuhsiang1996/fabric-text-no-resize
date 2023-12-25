@@ -11,7 +11,7 @@ import { uploadImageHandler } from "../../utils/upLoadImage";
 
 const FabricTest = () => {
   const canvasRef = useRef(null);
-  const [faricCanvas, setFaricCanvas] = useState<fabric.Canvas>(null);
+  const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas>(null);
   const [objcetColor, setObjcetColor] = useState<string>("#ffffff");
   const [objBorderInfo, setObjBorderInfo] = useState<{
     hasBorder: boolean;
@@ -24,16 +24,9 @@ const FabricTest = () => {
     undefined
   );
   const [layerList, setLayerList] = useState([]);
-
-  const getCurrentSelectObjIndex = (_selectedObj: fabric.Object) => {
-    if (_selectedObj && faricCanvas) {
-      const objectsOnCanvas = faricCanvas.getObjects();
-      const selectedIndex = objectsOnCanvas.findIndex(
-        (obj) => obj.name === _selectedObj.name
-      );
-      return selectedIndex;
-    }
-  };
+  const [currentSelectObjIndex, setCurrentSelectObjIndex] = useState<
+    number | null
+  >(null);
 
   const handleDrop = (
     e: React.DragEvent<HTMLLIElement>,
@@ -41,7 +34,7 @@ const FabricTest = () => {
   ) => {
     e.preventDefault();
 
-    if (faricCanvas && layerList.length > 0) {
+    if (fabricCanvas && layerList.length > 0) {
       const draggedObjId = e.dataTransfer.getData("text/plain");
       const draggedObjIndex = layerList.findIndex(
         (obj) => obj.id === draggedObjId
@@ -59,19 +52,19 @@ const FabricTest = () => {
         setLayerList(updatedLayerList);
 
         // 清空 Canvas 中的对象
-        faricCanvas.clear();
+        fabricCanvas.clear();
 
         // 重新添加按照新顺序的对象
         updatedLayerList.forEach((obj) => {
-          const canvasObj = faricCanvas
+          const canvasObj = fabricCanvas
             ?.getObjects()
             .find((canvasObj) => canvasObj.name === obj.id);
           if (canvasObj) {
-            faricCanvas?.add(canvasObj);
+            fabricCanvas?.add(canvasObj);
           }
         });
 
-        faricCanvas?.requestRenderAll();
+        fabricCanvas?.requestRenderAll();
       }
     }
   };
@@ -80,7 +73,7 @@ const FabricTest = () => {
     const canvas = new fabric.Canvas(canvasRef.current, {
       // backgroundColor: "#dcd6d6",
     });
-    setFaricCanvas(canvas);
+    setFabricCanvas(canvas);
 
     canvas.on("selection:created", (selectedObgEvent) => {
       if (
@@ -88,44 +81,36 @@ const FabricTest = () => {
         selectedObgEvent.selected &&
         selectedObgEvent.selected[0].type
       ) {
-        const selectedObjType = selectedObgEvent.selected[0].type;
-        console.log("Selected Type : ", selectedObjType);
-        if (selectedObjType === "image") {
-          setSelectedObj(selectedObgEvent.selected[0]);
-        }
+        const selectObj = selectedObgEvent.selected[0];
+        setSelectedObj(selectObj);
+        currentSelectedObjIndex(canvas, selectObj.name);
       }
     });
 
     canvas.on("selection:updated", (selectedObgEvent) => {
-      setSelectedObj(undefined);
       if (
         selectedObgEvent.selected &&
         selectedObgEvent.selected &&
         selectedObgEvent.selected[0].type
       ) {
-        const selectedObjType = selectedObgEvent.selected[0].type;
-        console.log("Selected Type : ", selectedObjType);
-        if (selectedObjType === "image") {
-          setSelectedObj(selectedObgEvent.selected[0]);
-        }
+        const selectObj = selectedObgEvent.selected[0];
+        setSelectedObj(selectObj);
+        currentSelectedObjIndex(canvas, selectObj.name);
       }
     });
 
     canvas.on("selection:cleared", (selectedObgEvent) => {
       setSelectedObj(undefined);
+      setCurrentSelectObjIndex(null);
     });
 
     // 監聽物件新增事件
     canvas.on("object:added", function (options) {
-      const addedObject = options.target;
-      console.log("新增了一個物件:", addedObject);
       updateLayerList(canvas);
     });
 
     // 監聽物件新增事件
     canvas.on("object:removed", function (options) {
-      const removedObject = options.target;
-      console.log("刪除了一個物件:", removedObject);
       updateLayerList(canvas);
     });
 
@@ -143,15 +128,16 @@ const FabricTest = () => {
     setLayerList(
       objectsOnCanvas.map((object, index) => ({
         id: index,
-        name: object.name,
+        name: `${object.type}-${index}`,
         zIndex: `${index}`,
       }))
     );
   };
 
   useEffect(() => {
-    // Check if `faricCanvas` is not null before calling `changeObjectColor` function
-    if (faricCanvas !== null) changeObjectBorderColor(faricCanvas, objcetColor);
+    // Check if `fabricCanvas` is not null before calling `changeObjectColor` function
+    if (fabricCanvas !== null)
+      changeObjectBorderColor(fabricCanvas, objcetColor);
   }, [objcetColor]);
 
   const handleCheckboxChange = () => {
@@ -169,7 +155,7 @@ const FabricTest = () => {
         ...preVal,
         hasBorder: !preVal.hasBorder,
       }));
-      faricCanvas.renderAndReset();
+      fabricCanvas.renderAndReset();
     }
   };
 
@@ -180,13 +166,13 @@ const FabricTest = () => {
         strokeWidth: parseInt(borderWidth),
       }));
       selectedObj.set({ strokeWidth: parseInt(borderWidth) });
-      faricCanvas.renderAndReset();
+      fabricCanvas.renderAndReset();
     }
   };
 
   const generatePictures = () => {
-    if (faricCanvas) {
-      const dataURL = faricCanvas.toDataURL();
+    if (fabricCanvas) {
+      const dataURL = fabricCanvas.toDataURL();
 
       // 創建一個 a 元素，將 data URL 設置為 href 屬性
       const a = document.createElement("a");
@@ -200,6 +186,26 @@ const FabricTest = () => {
     }
   };
 
+  const updateLayoutList = () => {
+    // 更新 layerList
+    if (!fabricCanvas) return;
+    const objectsOnCanvas = fabricCanvas.getObjects();
+    setLayerList(objectsOnCanvas);
+  };
+
+  const currentSelectedObjIndex = (
+    canvas: fabric.Canvas,
+    selectedObjName: string
+  ) => {
+    const index = canvas
+      .getObjects()
+      .findIndex((obj, index) => obj.name === selectedObjName);
+
+    if (index >= 0) {
+      setCurrentSelectObjIndex(index);
+    }
+  };
+
   return (
     <div className={classes.container}>
       <div className={classes.controlBar}>
@@ -207,40 +213,27 @@ const FabricTest = () => {
           <input
             type="file"
             accept="image/jpeg, image/png"
-            onChange={(e) => uploadImageHandler(faricCanvas, e)}
+            onChange={(e) => uploadImageHandler(fabricCanvas, e)}
             onClick={(e) => (e.currentTarget.value = null)}
           ></input>
         </div>
         <div className={classes.buttonItem}>
           <Button
             buttonLabel="AddCircle"
-            handlerFunction={() => addCircle(faricCanvas, {})}
+            handlerFunction={() => addCircle(fabricCanvas, {})}
           />
         </div>
         <div className={classes.buttonItem}>
           <Button
             buttonLabel="AddArrow"
-            handlerFunction={() => addArrow(faricCanvas)}
+            handlerFunction={() => addArrow(fabricCanvas)}
           />
         </div>
 
         <div className={classes.buttonItem}>
           <Button
             buttonLabel="Remove"
-            handlerFunction={() => {
-              removeObject(faricCanvas);
-              if (faricCanvas) {
-                const objectsOnCanvas = faricCanvas.getObjects();
-                console.log("objectsOnCanvas", objectsOnCanvas);
-                setLayerList(
-                  objectsOnCanvas.map((object, index) => ({
-                    id: index,
-                    name: object.name,
-                    zIndex: `${index}`,
-                  }))
-                );
-              }
-            }}
+            handlerFunction={() => removeObject(fabricCanvas)}
           />
         </div>
         <div className={classes.buttonItem}>
@@ -259,7 +252,7 @@ const FabricTest = () => {
           />
         </div>
       </div>
-      {selectedObj && (
+      {selectedObj && selectedObj.type === "image" && (
         <div className={classes.controlBar}>
           <div className={classes.buttonItem}>
             <label>Has Border</label>
@@ -283,33 +276,37 @@ const FabricTest = () => {
         <div className={classes.buttonItem}>
           <Button
             buttonLabel="選中的物件移到最前面"
-            handlerFunction={() =>
-              faricCanvas.bringToFront(faricCanvas.getActiveObject())
-            }
+            handlerFunction={() => {
+              fabricCanvas.bringToFront(fabricCanvas.getActiveObject());
+              updateLayoutList();
+            }}
           />
         </div>
         <div className={classes.buttonItem}>
           <Button
             buttonLabel="選中的物件移到最後面"
-            handlerFunction={() =>
-              faricCanvas.sendToBack(faricCanvas.getActiveObject())
-            }
+            handlerFunction={() => {
+              fabricCanvas.sendToBack(fabricCanvas.getActiveObject());
+              updateLayoutList();
+            }}
           />
         </div>
         <div className={classes.buttonItem}>
           <Button
             buttonLabel="選中的物件往前移動一層"
-            handlerFunction={() =>
-              faricCanvas.bringForward(faricCanvas.getActiveObject())
-            }
+            handlerFunction={() => {
+              fabricCanvas.bringForward(fabricCanvas.getActiveObject());
+              updateLayoutList();
+            }}
           />
         </div>
         <div className={classes.buttonItem}>
           <Button
             buttonLabel="選中的物件往後移動一層"
-            handlerFunction={() =>
-              faricCanvas.sendBackwards(faricCanvas.getActiveObject())
-            }
+            handlerFunction={() => {
+              fabricCanvas.sendBackwards(fabricCanvas.getActiveObject());
+              updateLayoutList();
+            }}
           />
         </div>
       </div>
@@ -321,8 +318,10 @@ const FabricTest = () => {
           <ul className={classes.layoutulstContent}>
             {layerList.map((item, index) => (
               <li
-                draggable
-                className={`${classes.layoutListItem} `}
+                // draggable
+                className={`${classes.layoutListItem}  ${
+                  currentSelectObjIndex === index ? classes.selectedItem : ""
+                }`}
                 key={item.name}
               >{`${index} : ${item.name}`}</li>
             ))}

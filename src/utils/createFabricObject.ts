@@ -146,6 +146,7 @@ export const addCircle = (
  */
 export const addArrow = (canvas: fabric.Canvas) => {
   // 宣告一個 LineWithArrow 實例
+  console.log(canvas.getObjects().length);
   const LineWithArrowObj = new fabric.LineWithArrow([50, 50, 150, 50], {
     strokeWidth: 2,
     stroke: "#ff0000",
