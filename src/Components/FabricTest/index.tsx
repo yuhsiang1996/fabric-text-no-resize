@@ -205,6 +205,16 @@ const FabricTest = () => {
       setCurrentSelectObjIndex(index);
     }
   };
+  const activeObjcet = (index: number) => {
+    const objs = fabricCanvas.getObjects();
+    if (objs.length > 0) {
+      const obj = objs[index];
+      if (obj) {
+        fabricCanvas.setActiveObject(obj);
+        fabricCanvas.renderAndReset();
+      }
+    }
+  };
 
   return (
     <div className={classes.container}>
@@ -318,7 +328,7 @@ const FabricTest = () => {
           <ul className={classes.layoutulstContent}>
             {layerList.map((item, index) => (
               <li
-                // draggable
+                onClick={() => activeObjcet(index)}
                 className={`${classes.layoutListItem}  ${
                   currentSelectObjIndex === index ? classes.selectedItem : ""
                 }`}
