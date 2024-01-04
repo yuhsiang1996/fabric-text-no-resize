@@ -39,8 +39,9 @@
     "dev": "webpack-dev-server  --host 0.0.0.0 --progress"
   },
   "dependencies": {
-    "@types/fabric": "^5.3.3",
+    "@types/fabric": "5.3.3",
     "babel-polyfill": "^6.26.0",
-    "fabric": "^5.3.0"
+    "fabric": "5.3.0",
+    "react-advanced-cropper": "0.19.4"
   }
 }
